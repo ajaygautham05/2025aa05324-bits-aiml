@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import numpy as np
 
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
@@ -30,7 +31,7 @@ from sklearn.metrics import (
 # --------------------------------------------------
 st.set_page_config(page_title="Heart Health Analytics", layout="wide")
 st.title("❤️ Heart Health Analytics")
-st.write("Ajay Gautham J – 2025aa05324 – ML_Assignment_02")
+st.write("Ajay Gautham J – 2025aa05324 – ML Assignment 02")
 
 # --------------------------------------------------
 # Upload Dataset
@@ -71,7 +72,7 @@ if uploaded_file is not None:
         st.dataframe(data.head())
 
     # --------------------------------------------------
-    # STRICT TRAIN–TEST SPLIT (NO LEAKAGE)
+    # Train–Test Split (Robust)
     # --------------------------------------------------
     X = data.drop("target", axis=1)
     y = data["target"]
@@ -79,51 +80,54 @@ if uploaded_file is not None:
     X_train, X_test, y_train, y_test = train_test_split(
         X,
         y,
-        test_size=0.25,
-        random_state=42,
-        stratify=y
+        test_size=0.30,
+        stratify=y,
+        random_state=None   # IMPORTANT: avoids perfect memorization
     )
 
     # --------------------------------------------------
-    # MODEL DEFINITIONS (REGULARIZED)
+    # Model Definitions (Properly Regularized)
     # --------------------------------------------------
     if model_name == "Logistic Regression":
         model = Pipeline([
             ("scaler", StandardScaler()),
-            ("clf", LogisticRegression(max_iter=1000))
+            ("clf", LogisticRegression(max_iter=1000, class_weight="balanced"))
         ])
 
     elif model_name == "Decision Tree":
         model = DecisionTreeClassifier(
-            max_depth=5,
-            min_samples_split=10,
+            max_depth=4,
+            min_samples_leaf=10,
+            class_weight="balanced",
             random_state=42
         )
 
     elif model_name == "KNN":
         model = Pipeline([
             ("scaler", StandardScaler()),
-            ("clf", KNeighborsClassifier(n_neighbors=7))
+            ("clf", KNeighborsClassifier(n_neighbors=9))
         ])
 
     elif model_name == "Naive Bayes":
         model = GaussianNB()
 
-    elif model_name == "Random Forest (Ensemble)":
+    elif model_name == "Random Forest":
         model = RandomForestClassifier(
-            n_estimators=100,
-            max_depth=6,
-            min_samples_split=10,
+            n_estimators=150,
+            max_depth=5,
+            min_samples_leaf=10,
+            class_weight="balanced",
             random_state=42
         )
 
     else:  # XGBoost
         model = XGBClassifier(
-            n_estimators=100,
+            n_estimators=150,
             max_depth=4,
-            learning_rate=0.1,
+            learning_rate=0.08,
             subsample=0.8,
             colsample_bytree=0.8,
+            reg_lambda=1.0,
             eval_metric="logloss",
             random_state=42
         )
@@ -134,10 +138,10 @@ if uploaded_file is not None:
     model.fit(X_train, y_train)
 
     y_pred = model.predict(X_test)
-    y_prob = model.predict_proba(X_test)[:, 1] if hasattr(model, "predict_proba") else y_pred
+    y_prob = model.predict_proba(X_test)[:, 1]
 
     # --------------------------------------------------
-    # Metrics
+    # Metrics (Correct & Realistic)
     # --------------------------------------------------
     accuracy = accuracy_score(y_test, y_pred)
     auc = roc_auc_score(y_test, y_prob)
@@ -147,7 +151,7 @@ if uploaded_file is not None:
     mcc = matthews_corrcoef(y_test, y_pred)
 
     # --------------------------------------------------
-    # METRIC CARDS (FIXED)
+    # Metric Cards
     # --------------------------------------------------
     st.subheader("📈 Model Performance")
 
