@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+from io import StringIO
 
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
@@ -33,7 +34,7 @@ st.title("❤️ Heart Health Analytics")
 st.write("Ajay Gautham J – 2025aa05324 – ML Assignment 02")
 
 # --------------------------------------------------
-# GitHub Dataset URL (RAW)
+# GitHub RAW Dataset URL
 # --------------------------------------------------
 GITHUB_DATA_URL = (
     "https://raw.githubusercontent.com/ajaygautham05/"
@@ -41,20 +42,30 @@ GITHUB_DATA_URL = (
 )
 
 # --------------------------------------------------
-# Load Dataset Button
+# Download Dataset Button
 # --------------------------------------------------
-if st.button("📥 Load Dataset from GitHub"):
-    try:
-        data = pd.read_csv(GITHUB_DATA_URL)
+st.subheader("📥 Dataset from GitHub")
+
+try:
+    csv_text = pd.read_csv(GITHUB_DATA_URL).to_csv(index=False)
+
+    st.download_button(
+        label="⬇️ Download Dataset (heart.csv)",
+        data=csv_text,
+        file_name="heart.csv",
+        mime="text/csv"
+    )
+
+    if st.button("📊 Load Dataset for Analysis"):
+        st.session_state["data"] = pd.read_csv(StringIO(csv_text))
         st.success("Dataset loaded successfully from GitHub!")
 
-        st.session_state["data"] = data
-    except Exception as e:
-        st.error("Failed to load dataset from GitHub.")
-        st.stop()
+except Exception as e:
+    st.error("Unable to fetch dataset from GitHub.")
+    st.stop()
 
 # --------------------------------------------------
-# Proceed only if data is loaded
+# Proceed only if dataset is loaded
 # --------------------------------------------------
 if "data" in st.session_state:
     data = st.session_state["data"]
@@ -111,7 +122,7 @@ if "data" in st.session_state:
 
     elif model_name == "Decision Tree":
         model = DecisionTreeClassifier(
-            max_depth=4, min_samples_leaf=10, class_weight="balanced", random_state=42
+            max_depth=4, min_samples_leaf=10, class_weight="balanced"
         )
 
     elif model_name == "KNN":
@@ -125,56 +136,45 @@ if "data" in st.session_state:
 
     elif model_name == "Random Forest":
         model = RandomForestClassifier(
-            n_estimators=150, max_depth=5, min_samples_leaf=10,
-            class_weight="balanced", random_state=42
+            n_estimators=150, max_depth=5,
+            min_samples_leaf=10, class_weight="balanced"
         )
 
     else:
         model = XGBClassifier(
-            n_estimators=150, max_depth=4, learning_rate=0.08,
-            subsample=0.8, colsample_bytree=0.8,
-            eval_metric="logloss", random_state=42
+            n_estimators=150, max_depth=4,
+            learning_rate=0.08, subsample=0.8,
+            colsample_bytree=0.8,
+            eval_metric="logloss"
         )
 
     # --------------------------------------------------
     # Train & Predict
     # --------------------------------------------------
     model.fit(X_train, y_train)
-
     y_pred = model.predict(X_test)
     y_prob = model.predict_proba(X_test)[:, 1]
 
     # --------------------------------------------------
     # Metrics
     # --------------------------------------------------
-    accuracy = accuracy_score(y_test, y_pred)
-    auc = roc_auc_score(y_test, y_prob)
-    precision = precision_score(y_test, y_pred)
-    recall = recall_score(y_test, y_pred)
-    f1 = f1_score(y_test, y_pred)
-    mcc = matthews_corrcoef(y_test, y_pred)
-
-    # --------------------------------------------------
-    # Metric Cards
-    # --------------------------------------------------
     st.subheader("📈 Model Performance")
 
     c1, c2, c3 = st.columns(3)
-    c1.metric("Accuracy", f"{accuracy:.3f}")
-    c2.metric("Precision", f"{precision:.3f}")
-    c3.metric("F1 Score", f"{f1:.3f}")
+    c1.metric("Accuracy", f"{accuracy_score(y_test, y_pred):.3f}")
+    c2.metric("Precision", f"{precision_score(y_test, y_pred):.3f}")
+    c3.metric("F1 Score", f"{f1_score(y_test, y_pred):.3f}")
 
     c4, c5, c6 = st.columns(3)
-    c4.metric("AUC", f"{auc:.3f}")
-    c5.metric("Recall", f"{recall:.3f}")
-    c6.metric("MCC", f"{mcc:.3f}")
+    c4.metric("AUC", f"{roc_auc_score(y_test, y_prob):.3f}")
+    c5.metric("Recall", f"{recall_score(y_test, y_pred):.3f}")
+    c6.metric("MCC", f"{matthews_corrcoef(y_test, y_pred):.3f}")
 
     # --------------------------------------------------
     # Confusion Matrix
     # --------------------------------------------------
     st.subheader("🧩 Confusion Matrix")
     cm = confusion_matrix(y_test, y_pred)
-
     fig, ax = plt.subplots()
     sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", ax=ax)
     ax.set_xlabel("Predicted")
@@ -185,8 +185,9 @@ if "data" in st.session_state:
     # Classification Report
     # --------------------------------------------------
     st.subheader("📄 Classification Report")
-    report = classification_report(y_test, y_pred, output_dict=True)
-    st.dataframe(pd.DataFrame(report).transpose())
+    st.dataframe(pd.DataFrame(
+        classification_report(y_test, y_pred, output_dict=True)
+    ).transpose())
 
 else:
-    st.info("⬆️ Click **Load Dataset from GitHub** to begin.")
+    st.info("⬆️ Click **Load Dataset for Analysis** to begin.")
