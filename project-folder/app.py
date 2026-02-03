@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-import numpy as np
 
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
@@ -34,59 +33,75 @@ st.title("❤️ Heart Health Analytics")
 st.write("Ajay Gautham J – 2025aa05324 – ML Assignment 02")
 
 # --------------------------------------------------
-# Upload Dataset
+# GitHub Dataset URL (RAW)
 # --------------------------------------------------
-uploaded_file = st.file_uploader("Upload CSV dataset", type=["csv"])
-
-# --------------------------------------------------
-# Model Selection
-# --------------------------------------------------
-model_name = st.selectbox(
-    "Select Machine Learning Model",
-    (
-        "Logistic Regression",
-        "Decision Tree",
-        "KNN",
-        "Naive Bayes",
-        "Random Forest",
-        "XGBoost"
-    )
+GITHUB_DATA_URL = (
+    "https://raw.githubusercontent.com/ajaygautham05/"
+    "2025aa05324-bits-aiml/main/project-folder/heart.csv"
 )
 
 # --------------------------------------------------
-# Main Logic
+# Load Dataset Button
 # --------------------------------------------------
-if uploaded_file is not None:
-    data = pd.read_csv(uploaded_file)
+if st.button("📥 Load Dataset from GitHub"):
+    try:
+        data = pd.read_csv(GITHUB_DATA_URL)
+        st.success("Dataset loaded successfully from GitHub!")
+
+        st.session_state["data"] = data
+    except Exception as e:
+        st.error("Failed to load dataset from GitHub.")
+        st.stop()
+
+# --------------------------------------------------
+# Proceed only if data is loaded
+# --------------------------------------------------
+if "data" in st.session_state:
+    data = st.session_state["data"]
 
     if "target" not in data.columns:
         st.error("Dataset must contain a 'target' column.")
         st.stop()
 
+    # --------------------------------------------------
     # Dataset Overview
-    with st.expander("📊 Dataset Overview"):
-        c1, c2, c3 = st.columns(3)
-        c1.metric("Rows", data.shape[0])
-        c2.metric("Features", data.shape[1] - 1)
-        c3.metric("Classes", data["target"].nunique())
+    # --------------------------------------------------
+    st.subheader("📊 Dataset Overview")
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Rows", data.shape[0])
+    c2.metric("Features", data.shape[1] - 1)
+    c3.metric("Classes", data["target"].nunique())
+
+    with st.expander("View Sample Data"):
         st.dataframe(data.head())
 
     # --------------------------------------------------
-    # Train–Test Split (Robust)
+    # Model Selection
+    # --------------------------------------------------
+    model_name = st.selectbox(
+        "Select Machine Learning Model",
+        (
+            "Logistic Regression",
+            "Decision Tree",
+            "KNN",
+            "Naive Bayes",
+            "Random Forest",
+            "XGBoost"
+        )
+    )
+
+    # --------------------------------------------------
+    # Train–Test Split
     # --------------------------------------------------
     X = data.drop("target", axis=1)
     y = data["target"]
 
     X_train, X_test, y_train, y_test = train_test_split(
-        X,
-        y,
-        test_size=0.30,
-        stratify=y,
-        random_state=None   # IMPORTANT: avoids perfect memorization
+        X, y, test_size=0.30, stratify=y, random_state=None
     )
 
     # --------------------------------------------------
-    # Model Definitions (Properly Regularized)
+    # Model Definitions
     # --------------------------------------------------
     if model_name == "Logistic Regression":
         model = Pipeline([
@@ -96,10 +111,7 @@ if uploaded_file is not None:
 
     elif model_name == "Decision Tree":
         model = DecisionTreeClassifier(
-            max_depth=4,
-            min_samples_leaf=10,
-            class_weight="balanced",
-            random_state=42
+            max_depth=4, min_samples_leaf=10, class_weight="balanced", random_state=42
         )
 
     elif model_name == "KNN":
@@ -113,23 +125,15 @@ if uploaded_file is not None:
 
     elif model_name == "Random Forest":
         model = RandomForestClassifier(
-            n_estimators=150,
-            max_depth=5,
-            min_samples_leaf=10,
-            class_weight="balanced",
-            random_state=42
+            n_estimators=150, max_depth=5, min_samples_leaf=10,
+            class_weight="balanced", random_state=42
         )
 
-    else:  # XGBoost
+    else:
         model = XGBClassifier(
-            n_estimators=150,
-            max_depth=4,
-            learning_rate=0.08,
-            subsample=0.8,
-            colsample_bytree=0.8,
-            reg_lambda=1.0,
-            eval_metric="logloss",
-            random_state=42
+            n_estimators=150, max_depth=4, learning_rate=0.08,
+            subsample=0.8, colsample_bytree=0.8,
+            eval_metric="logloss", random_state=42
         )
 
     # --------------------------------------------------
@@ -141,7 +145,7 @@ if uploaded_file is not None:
     y_prob = model.predict_proba(X_test)[:, 1]
 
     # --------------------------------------------------
-    # Metrics (Correct & Realistic)
+    # Metrics
     # --------------------------------------------------
     accuracy = accuracy_score(y_test, y_pred)
     auc = roc_auc_score(y_test, y_prob)
@@ -185,4 +189,4 @@ if uploaded_file is not None:
     st.dataframe(pd.DataFrame(report).transpose())
 
 else:
-    st.info("⬆️ Upload a CSV dataset to start.")
+    st.info("⬆️ Click **Load Dataset from GitHub** to begin.")
