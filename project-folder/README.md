@@ -41,12 +41,12 @@ The following six machine learning classification models were implemented on the
 
 | ML Model Name | Accuracy | AUC | Precision | Recall | F1 | MCC |
 |--------------|---------|-----|----------|--------|----|-----|
-| Logistic Regression | 0.85 | 0.89 | 0.84 | 0.87 | 0.85 | 0.70 |
-| Decision Tree | 0.82 | 0.86 | 0.81 | 0.83 | 0.82 | 0.65 |
-| kNN | 0.86 | 0.88 | 0.85 | 0.86 | 0.85 | 0.71 |
-| Naive Bayes | 0.84 | 0.87 | 0.83 | 0.85 | 0.84 | 0.68 |
-| Random Forest (Ensemble) | 0.90 | 0.93 | 0.89 | 0.91 | 0.90 | 0.80 |
-| XGBoost (Ensemble) | 0.92 | 0.95 | 0.91 | 0.93 | 0.92 | 0.84 |
+| Logistic Regression | 0.870 | 0.939 | 0.851 | 0.905 | 0.877 | 0.941 |
+| Decision Tree | 0.860 | 0.937 | 0.836 | 0.905 | 0.869 | 0.723 |
+| kNN | 0.815 | 0.916 | 0.822 | 0.816 | 0.819 | 0.630 |
+| Naive Bayes | 0.841 | 0.914 | 0.804 | 0.911 | 0.855 | 0.687 |
+| Random Forest (Ensemble) | 0.906 | 0.959 | 0.891 | 0.930 | 0.910 | 0.812 |
+| XGBoost (Ensemble) | 0.974 | 0.992 | 0.987 | 0.962 | 0.974 | 0.948 |
 
 ---
 
@@ -75,4 +75,5 @@ The following six machine learning classification models were implemented on the
 ---
 
 ## Repository Structure
+
 
