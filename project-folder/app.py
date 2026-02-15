@@ -42,9 +42,9 @@ GITHUB_DATA_URL = (
 )
 
 # --------------------------------------------------
-# Download Dataset Button
+# Dataset Download Section
 # --------------------------------------------------
-st.subheader("📥 Dataset from GitHub")
+st.subheader("📥 Download Dataset (GitHub Source)")
 
 try:
     csv_text = pd.read_csv(GITHUB_DATA_URL).to_csv(index=False)
@@ -56,23 +56,44 @@ try:
         mime="text/csv"
     )
 
-    if st.button("📊 Load Dataset for Analysis"):
+    if st.button("📊 Load GitHub Dataset for Analysis"):
         st.session_state["data"] = pd.read_csv(StringIO(csv_text))
         st.success("Dataset loaded successfully from GitHub!")
 
-except Exception as e:
+except Exception:
     st.error("Unable to fetch dataset from GitHub.")
     st.stop()
+
+# --------------------------------------------------
+# Dataset Upload Section (NEW FEATURE)
+# --------------------------------------------------
+st.subheader("📤 Upload Your Own Dataset")
+
+uploaded_file = st.file_uploader(
+    "Upload a CSV file with a `target` column",
+    type=["csv"]
+)
+
+if uploaded_file is not None:
+    try:
+        uploaded_df = pd.read_csv(uploaded_file)
+
+        if "target" not in uploaded_df.columns:
+            st.error("Uploaded dataset must contain a 'target' column.")
+            st.stop()
+
+        st.session_state["data"] = uploaded_df
+        st.success("Uploaded dataset loaded successfully!")
+
+    except Exception as e:
+        st.error("Error reading uploaded CSV file.")
+        st.stop()
 
 # --------------------------------------------------
 # Proceed only if dataset is loaded
 # --------------------------------------------------
 if "data" in st.session_state:
     data = st.session_state["data"]
-
-    if "target" not in data.columns:
-        st.error("Dataset must contain a 'target' column.")
-        st.stop()
 
     # --------------------------------------------------
     # Dataset Overview
@@ -122,7 +143,9 @@ if "data" in st.session_state:
 
     elif model_name == "Decision Tree":
         model = DecisionTreeClassifier(
-            max_depth=4, min_samples_leaf=10, class_weight="balanced"
+            max_depth=4,
+            min_samples_leaf=10,
+            class_weight="balanced"
         )
 
     elif model_name == "KNN":
@@ -136,14 +159,18 @@ if "data" in st.session_state:
 
     elif model_name == "Random Forest":
         model = RandomForestClassifier(
-            n_estimators=150, max_depth=5,
-            min_samples_leaf=10, class_weight="balanced"
+            n_estimators=150,
+            max_depth=5,
+            min_samples_leaf=10,
+            class_weight="balanced"
         )
 
     else:
         model = XGBClassifier(
-            n_estimators=150, max_depth=4,
-            learning_rate=0.08, subsample=0.8,
+            n_estimators=150,
+            max_depth=4,
+            learning_rate=0.08,
+            subsample=0.8,
             colsample_bytree=0.8,
             eval_metric="logloss"
         )
@@ -185,9 +212,11 @@ if "data" in st.session_state:
     # Classification Report
     # --------------------------------------------------
     st.subheader("📄 Classification Report")
-    st.dataframe(pd.DataFrame(
-        classification_report(y_test, y_pred, output_dict=True)
-    ).transpose())
+    st.dataframe(
+        pd.DataFrame(
+            classification_report(y_test, y_pred, output_dict=True)
+        ).transpose()
+    )
 
 else:
-    st.info("⬆️ Click **Load Dataset for Analysis** to begin.")
+    st.info("⬆️ Download or upload a dataset to begin analysis.")
